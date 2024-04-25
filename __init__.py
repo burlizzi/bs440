@@ -98,7 +98,7 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
         except Eq3Exception as e:
             if not thermostat.is_connected:
                 _LOGGER.error(
-                    "[%s] eQ-3 device disconnected",
+                    "[%s] BS440 device disconnected",
                     mac_address,
                 )
                 async_dispatcher_send(
@@ -109,7 +109,7 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
                 continue
 
             _LOGGER.error(
-                "[%s] Error updating eQ-3 device: %s",
+                "[%s] Error updating BS440 device: %s",
                 mac_address,
                 e,
             )
@@ -133,7 +133,7 @@ async def _async_reconnect_thermostat(hass: HomeAssistant, entry: ConfigEntry) -
             continue
 
         _LOGGER.debug(
-            "[%s] eQ-3 device connected",
+            "[%s] BS440 device connected",
             mac_address,
         )
 

@@ -3,16 +3,16 @@
         "abort": {
             "already_configured": "Il dispositivo \u00e8 gi\u00e0 configurato"
         },
-        "flow_title": "Dispositivo eQ-3 [{mac}]",
+        "flow_title": "Dispositivo BS440 [{mac}]",
         "step": {
             "init": {
-                "title": "Configura nuovo dispositivo eQ-3"
+                "title": "Configura nuovo dispositivo BS440"
             },
             "user": {
                 "data": {
                     "mac": "Indirizzo MAC"
                 },
-                "title": "Configura nuovo dispositivo eQ-3"
+                "title": "Configura nuovo dispositivo BS440"
             }
         }
     }

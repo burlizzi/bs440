@@ -1,15 +1,15 @@
 {
     "config": {
-        "flow_title": "Dispositivo eQ-3 [{mac}]",
+        "flow_title": "Dispositivo BS440 [{mac}]",
         "step": {
             "init": {
-                "title": "Configurar nuevo dispositivo eQ-3"
+                "title": "Configurar nuevo dispositivo BS440"
             },
             "user": {
                 "data": {
                     "mac": "Direcci\u00f3n MAC"
                 },
-                "title": "Configurar nuevo dispositivo eQ-3"
+                "title": "Configurar nuevo dispositivo BS440"
             }
         }
     }

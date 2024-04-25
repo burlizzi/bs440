@@ -62,7 +62,7 @@ async def async_setup_entry(
 
 
 class Eq3Climate(Eq3Entity, ClimateEntity):
-    """Climate entity to represent a eQ-3 thermostat."""
+    """Climate entity to represent a BS440 thermostat."""
 
     _attr_name = None
     _attr_supported_features = (
