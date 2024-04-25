@@ -15,6 +15,7 @@
   "iot_class": "local_polling",
   "loggers": ["bs440"],
   "quality_scale": "silver",
-  "version":"0.0.0.1"
+  "version":"0.0.0.1",
+  "requirements": ["eq3btsmart==1.1.6", "bleak-esphome==1.0.0"]
   
 }

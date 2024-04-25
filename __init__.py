@@ -29,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if TYPE_CHECKING:
         assert mac_address is not None
 
-    eq3_config = BS440Config(
+    bs440_config = BS440Config(
         mac_address=mac_address,
     )
 
@@ -39,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if device is None:
         raise ConfigEntryNotReady(
-            f"[{eq3_config.mac_address}] Device could not be found"
+            f"[{bs440_config.mac_address}] Device could not be found"
         )
 
     #thermostat = Thermostat(
@@ -49,8 +49,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     #    ble_device=device,
     #)
 
-    eq3_config_entry = BS440ConfigEntryData(eq3_config=eq3_config, scale=0)
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = eq3_config_entry
+    bs440_config_entry = BS440ConfigEntryData(bs440_config=bs440_config, scale=0)
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = bs440_config_entry
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -66,8 +66,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle config entry unload."""
 
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        eq3_config_entry: BS440ConfigEntryData = hass.data[DOMAIN].pop(entry.entry_id)
-        await eq3_config_entry.thermostat.async_disconnect()
+        bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN].pop(entry.entry_id)
+        await bs440_config_entry.thermostat.async_disconnect()
 
     return unload_ok
 
@@ -81,10 +81,10 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
 async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Run the thermostat."""
 
-    eq3_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
-    thermostat = eq3_config_entry.thermostat
-    mac_address = eq3_config_entry.eq3_config.mac_address
-    scan_interval = eq3_config_entry.eq3_config.scan_interval
+    bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
+    thermostat = bs440_config_entry.thermostat
+    mac_address = bs440_config_entry.bs440_config.mac_address
+    scan_interval = bs440_config_entry.bs440_config.scan_interval
 
     await _async_reconnect_thermostat(hass, entry)
 
@@ -116,10 +116,10 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
 async def _async_reconnect_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reconnect the thermostat."""
 
-    eq3_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
-    thermostat = eq3_config_entry.thermostat
-    mac_address = eq3_config_entry.eq3_config.mac_address
-    scan_interval = eq3_config_entry.eq3_config.scan_interval
+    bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
+    scale = bs440_config_entry.scale
+    mac_address = bs440_config_entry.bs440_config.mac_address
+    scan_interval = bs440_config_entry.bs440_config.scan_interval
 
     while True:
         try:
