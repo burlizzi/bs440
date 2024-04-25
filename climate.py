@@ -52,7 +52,7 @@ async def async_setup_entry(
     bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][config_entry.entry_id]
 
     async_add_entities(
-        [BS440Scale(bs440_config_entry.bs440_config, bs440_config_entry.scale)],
+        [BS440Scale(bs440_config_entry.bs440_config, bs440_config_entry.conn)],
     )
 
 
@@ -71,7 +71,7 @@ class BS440Scale(BS440Entity, SensorEntity):
     _attr_preset_mode: str | None = None
     _target_temperature: float | None = None
 
-    def __init__(self, bs440_config: BS440Config, scale: float) -> None:
+    def __init__(self, bs440_config: BS440Config, conn: BleakClient) -> None:
         """Initialize the climate entity."""
 
         super().__init__(bs440_config)
