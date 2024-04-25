@@ -1,4 +1,4 @@
-"""Constants for EQ3 Bluetooth Smart Radiator Valves."""
+"""Constants for bs440 Bluetooth Smart Radiator Valves."""
 
 from enum import Enum
 
@@ -13,7 +13,7 @@ from homeassistant.components.climate import (
     HVACMode,
 )
 
-DOMAIN = "eq3btsmart"
+DOMAIN = "bs440"
 
 MANUFACTURER = "eQ-3 AG"
 DEVICE_MODEL = "CC-RT-BLE-EQ"
@@ -69,5 +69,5 @@ DEFAULT_CURRENT_TEMP_SELECTOR = CurrentTemperatureSelector.DEVICE
 DEFAULT_TARGET_TEMP_SELECTOR = TargetTemperatureSelector.TARGET
 DEFAULT_SCAN_INTERVAL = 10  # seconds
 
-SIGNAL_THERMOSTAT_DISCONNECTED = f"{DOMAIN}.thermostat_disconnected"
-SIGNAL_THERMOSTAT_CONNECTED = f"{DOMAIN}.thermostat_connected"
+SIGNAL_SCALE_DISCONNECTED = f"{DOMAIN}.scale_disconnected"
+SIGNAL_SCALE_CONNECTED = f"{DOMAIN}.scale_connected"

@@ -1,12 +1,8 @@
-"""Support for EQ3 devices."""
+"""Support for bs440 devices."""
 
 import asyncio
 import logging
 from typing import TYPE_CHECKING
-
-from eq3btsmart import Thermostat
-from eq3btsmart.exceptions import Eq3Exception
-from eq3btsmart.thermostat_config import ThermostatConfig
 
 from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry
@@ -16,7 +12,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .const import DOMAIN, SIGNAL_THERMOSTAT_CONNECTED, SIGNAL_THERMOSTAT_DISCONNECTED
-from .models import Eq3Config, Eq3ConfigEntryData
+from .models import BS440Config, BS440ConfigEntryData
 
 PLATFORMS = [
     Platform.CLIMATE,
@@ -33,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if TYPE_CHECKING:
         assert mac_address is not None
 
-    eq3_config = Eq3Config(
+    eq3_config = BS440Config(
         mac_address=mac_address,
     )
 
@@ -53,7 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ble_device=device,
     )
 
-    eq3_config_entry = Eq3ConfigEntryData(eq3_config=eq3_config, thermostat=thermostat)
+    eq3_config_entry = BS440ConfigEntryData(eq3_config=eq3_config, thermostat=thermostat)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = eq3_config_entry
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
@@ -70,7 +66,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle config entry unload."""
 
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        eq3_config_entry: Eq3ConfigEntryData = hass.data[DOMAIN].pop(entry.entry_id)
+        eq3_config_entry: BS440ConfigEntryData = hass.data[DOMAIN].pop(entry.entry_id)
         await eq3_config_entry.thermostat.async_disconnect()
 
     return unload_ok

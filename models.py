@@ -14,7 +14,7 @@ from .const import (
 
 @dataclass(slots=True)
 class BS440Config:
-    """Config for a single eQ-3 device."""
+    """Config for a single BS440 device."""
 
     mac_address: str
     current_temp_selector: CurrentTemperatureSelector = DEFAULT_CURRENT_TEMP_SELECTOR
@@ -26,8 +26,8 @@ class BS440Config:
 
 
 @dataclass(slots=True)
-class Eq3ConfigEntryData:
-    """Config entry for a single eQ-3 device."""
+class BS440ConfigEntryData:
+    """Config entry for a single BS440device."""
 
     bs440_config: BS440Config
     scale: float
