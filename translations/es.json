@@ -1,0 +1,16 @@
+{
+    "config": {
+        "flow_title": "Dispositivo eQ-3 [{mac}]",
+        "step": {
+            "init": {
+                "title": "Configurar nuevo dispositivo eQ-3"
+            },
+            "user": {
+                "data": {
+                    "mac": "Direcci\u00f3n MAC"
+                },
+                "title": "Configurar nuevo dispositivo eQ-3"
+            }
+        }
+    }
+}
