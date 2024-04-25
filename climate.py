@@ -82,11 +82,7 @@ class BS440Scale(BS440Entity, SensorEntity):
             model=DEVICE_MODEL,
             connections={(CONNECTION_BLUETOOTH, self._bs440_config.mac_address)},
         )
-        self._conn: BleakClient = BleakClient(
-            self._bs440_config.mac_address,
-            disconnected_callback=lambda client: self._on_connection_changed(False),
-            timeout=REQUEST_TIMEOUT,
-        )
+        
 
 
     async def async_added_to_hass(self) -> None:

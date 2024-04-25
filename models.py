@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from bleak import BleakClient
+
 
 from .const import (
     DEFAULT_CURRENT_TEMP_SELECTOR,
@@ -30,4 +32,4 @@ class BS440ConfigEntryData:
     """Config entry for a single BS440device."""
 
     bs440_config: BS440Config
-    scale: float
+    conn: BleakClient

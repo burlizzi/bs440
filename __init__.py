@@ -1,9 +1,11 @@
 """Support for bs440 devices."""
 
 import asyncio
+from http.client import REQUEST_TIMEOUT
 import logging
 from typing import TYPE_CHECKING
 
+from bleak import BleakClient
 from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -48,8 +50,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     #    ),
     #    ble_device=device,
     #)
+    conn: BleakClient = BleakClient(
+            bs440_config.mac_address,
+            #disconnected_callback=lambda client: self._on_connection_changed(False),
+            timeout=REQUEST_TIMEOUT,
+        )
 
-    bs440_config_entry = BS440ConfigEntryData(bs440_config=bs440_config, scale=0)
+    bs440_config_entry = BS440ConfigEntryData(bs440_config=bs440_config, conn=conn)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = bs440_config_entry
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
@@ -83,15 +90,16 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
 
     bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
     mac_address = bs440_config_entry.bs440_config.mac_address
+    conn = bs440_config_entry.conn
     scan_interval = bs440_config_entry.bs440_config.scan_interval
 
     await _async_reconnect_thermostat(hass, entry)
 
     while True:
         try:
-            await thermostat.async_get_status()
+            await conn.connect()
         except Exception as e:
-            if not thermostat.is_connected:
+            if not conn.is_connected:
                 _LOGGER.error(
                     "[%s] BS440 device disconnected",
                     mac_address,
