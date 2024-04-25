@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import DOMAIN, SIGNAL_THERMOSTAT_CONNECTED, SIGNAL_THERMOSTAT_DISCONNECTED
+from .const import DOMAIN, SIGNAL_SCALE_CONNECTED, SIGNAL_SCALE_DISCONNECTED
 from .models import BS440Config, BS440ConfigEntryData
 
 PLATFORMS = [
@@ -42,14 +42,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             f"[{eq3_config.mac_address}] Device could not be found"
         )
 
-    thermostat = Thermostat(
-        thermostat_config=ThermostatConfig(
-            mac_address=mac_address,
-        ),
-        ble_device=device,
-    )
+    #thermostat = Thermostat(
+    #    thermostat_config=ThermostatConfig(
+    #        mac_address=mac_address,
+    #    ),
+    #    ble_device=device,
+    #)
 
-    eq3_config_entry = BS440ConfigEntryData(eq3_config=eq3_config, thermostat=thermostat)
+    eq3_config_entry = BS440ConfigEntryData(eq3_config=eq3_config, scale=0)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = eq3_config_entry
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
@@ -81,7 +81,7 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
 async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Run the thermostat."""
 
-    eq3_config_entry: Eq3ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
+    eq3_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
     thermostat = eq3_config_entry.thermostat
     mac_address = eq3_config_entry.eq3_config.mac_address
     scan_interval = eq3_config_entry.eq3_config.scan_interval
@@ -91,7 +91,7 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
     while True:
         try:
             await thermostat.async_get_status()
-        except Eq3Exception as e:
+        except Exception as e:
             if not thermostat.is_connected:
                 _LOGGER.error(
                     "[%s] BS440 device disconnected",
@@ -99,7 +99,7 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
                 )
                 async_dispatcher_send(
                     hass,
-                    f"{SIGNAL_THERMOSTAT_DISCONNECTED}_{mac_address}",
+                    f"{SIGNAL_SCALE_DISCONNECTED}_{mac_address}",
                 )
                 await _async_reconnect_thermostat(hass, entry)
                 continue
@@ -116,7 +116,7 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
 async def _async_reconnect_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reconnect the thermostat."""
 
-    eq3_config_entry: Eq3ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
+    eq3_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
     thermostat = eq3_config_entry.thermostat
     mac_address = eq3_config_entry.eq3_config.mac_address
     scan_interval = eq3_config_entry.eq3_config.scan_interval
@@ -124,7 +124,7 @@ async def _async_reconnect_thermostat(hass: HomeAssistant, entry: ConfigEntry) -
     while True:
         try:
             await thermostat.async_connect()
-        except Eq3Exception:
+        except Exception:
             await asyncio.sleep(scan_interval)
             continue
 
@@ -135,7 +135,7 @@ async def _async_reconnect_thermostat(hass: HomeAssistant, entry: ConfigEntry) -
 
         async_dispatcher_send(
             hass,
-            f"{SIGNAL_THERMOSTAT_CONNECTED}_{mac_address}",
+            f"{SIGNAL_SCALE_CONNECTED}_{mac_address}",
         )
 
         return
