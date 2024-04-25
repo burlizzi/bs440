@@ -1,9 +1,11 @@
 """Platform for eQ-3 climate entities."""
 
+from http.client import REQUEST_TIMEOUT
 import logging
 from typing import Any
 
 
+from bleak import BleakClient
 from homeassistant.components.sensor import (
     RestoreSensor,
     SensorDeviceClass,
@@ -32,9 +34,7 @@ from .const import (
     MANUFACTURER,
     SIGNAL_SCALE_CONNECTED,
     SIGNAL_SCALE_DISCONNECTED,
-    CurrentTemperatureSelector,
     Preset,
-    TargetTemperatureSelector,
 )
 from .entity import BS440Entity
 from .models import BS440Config, BS440ConfigEntryData
@@ -82,6 +82,12 @@ class BS440Scale(BS440Entity, SensorEntity):
             model=DEVICE_MODEL,
             connections={(CONNECTION_BLUETOOTH, self._bs440_config.mac_address)},
         )
+        self._conn: BleakClient = BleakClient(
+            self._bs440_config.mac_address,
+            disconnected_callback=lambda client: self._on_connection_changed(False),
+            timeout=REQUEST_TIMEOUT,
+        )
+
 
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added to hass."""

@@ -82,7 +82,6 @@ async def _async_run_thermostat(hass: HomeAssistant, entry: ConfigEntry) -> None
     """Run the thermostat."""
 
     bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
-    thermostat = bs440_config_entry.thermostat
     mac_address = bs440_config_entry.bs440_config.mac_address
     scan_interval = bs440_config_entry.bs440_config.scan_interval
 

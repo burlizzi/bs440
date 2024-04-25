@@ -11,8 +11,8 @@ class BS440Entity(Entity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, bs440_config: BS440Config, thermostat: Thermostat) -> None:
+    def __init__(self, bs440_config: BS440Config, scale: float) -> None:
         """Initialize the bs440 entity."""
 
         self._bs440_config = bs440_config
-        self._thermostat = thermostat
+        self._scale = scale
