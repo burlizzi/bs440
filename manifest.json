@@ -3,7 +3,7 @@
   "name": "BS440 Bluetooth Smart scale",
   "bluetooth": [
     {
-      "local_name": "BS440",
+      "local_name": "SANITAS SBF70",
       "connectable": true
     }
   ],
