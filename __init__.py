@@ -124,13 +124,13 @@ async def _async_reconnect_thermostat(hass: HomeAssistant, entry: ConfigEntry) -
     """Reconnect the thermostat."""
 
     bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][entry.entry_id]
-    scale = bs440_config_entry.scale
+    conn = bs440_config_entry.conn
     mac_address = bs440_config_entry.bs440_config.mac_address
     scan_interval = bs440_config_entry.bs440_config.scan_interval
 
     while True:
         try:
-            await thermostat.async_connect()
+            conn.connect()
         except Exception:
             await asyncio.sleep(scan_interval)
             continue
