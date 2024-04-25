@@ -4,16 +4,16 @@ import logging
 from typing import Any
 
 
-from homeassistant.components.climate import (
-    ATTR_HVAC_MODE,
-    PRESET_NONE,
-    ClimateEntity,
-    ClimateEntityFeature,
-    HVACAction,
-    HVACMode,
+from homeassistant.components.sensor import (
+    RestoreSensor,
+    SensorDeviceClass,
+    SensorEntity,
 )
+
+from homeassistant.util.unit_system import US_CUSTOMARY_SYSTEM
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, PRECISION_HALVES, UnitOfTemperature
+from homeassistant.const import ATTR_TEMPERATURE, PRECISION_HALVES, UnitOfMass
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.device_registry import (
@@ -29,11 +29,9 @@ from homeassistant.util import slugify
 from .const import (
     DEVICE_MODEL,
     DOMAIN,
-    EQ_TO_HA_HVAC,
-    HA_TO_EQ_HVAC,
     MANUFACTURER,
-    SIGNAL_THERMOSTAT_CONNECTED,
-    SIGNAL_THERMOSTAT_DISCONNECTED,
+    SIGNAL_SCALE_CONNECTED,
+    SIGNAL_SCALE_DISCONNECTED,
     CurrentTemperatureSelector,
     Preset,
     TargetTemperatureSelector,
@@ -54,37 +52,29 @@ async def async_setup_entry(
     bs440_config_entry: BS440ConfigEntryData = hass.data[DOMAIN][config_entry.entry_id]
 
     async_add_entities(
-        [BS440Climate(bs440_config_entry.bs440_config, bs440_config_entry.scale)],
+        [BS440Scale(bs440_config_entry.bs440_config, bs440_config_entry.scale)],
     )
 
 
-class BS440Climate(BS440Entity, ClimateEntity):
+class BS440Scale(BS440Entity, SensorEntity):
     """Climate entity to represent a BS440 thermostat."""
 
     _attr_name = None
-    _attr_supported_features = (
-        ClimateEntityFeature.TARGET_TEMPERATURE
-        | ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TURN_OFF
-        | ClimateEntityFeature.TURN_ON
-    )
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
-    _attr_min_temp = EQ3BT_OFF_TEMP
-    _attr_max_temp = EQ3BT_MAX_TEMP
+    _attr_translation_key = "real_time_weight"
+    _attr_native_unit_of_measurement = UnitOfMass.KILOGRAMS
+    _attr_device_class = SensorDeviceClass.WEIGHT
+
     _attr_precision = PRECISION_HALVES
-    _attr_hvac_modes = list(HA_TO_EQ_HVAC.keys())
     _attr_preset_modes = list(Preset)
     _attr_should_poll = False
     _attr_available = False
-    _attr_hvac_mode: HVACMode | None = None
-    _attr_hvac_action: HVACAction | None = None
     _attr_preset_mode: str | None = None
     _target_temperature: float | None = None
 
-    def __init__(self, bs440_config: BS440Config, thermostat: Thermostat) -> None:
+    def __init__(self, bs440_config: BS440Config, scale: float) -> None:
         """Initialize the climate entity."""
 
-        super().__init__(bs440_config, thermostat)
+        super().__init__(bs440_config)
         self._attr_unique_id = format_mac(bs440_config.mac_address)
         self._attr_device_info = DeviceInfo(
             name=slugify(self._bs440_config.mac_address),
@@ -101,14 +91,14 @@ class BS440Climate(BS440Entity, ClimateEntity):
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass,
-                f"{SIGNAL_THERMOSTAT_DISCONNECTED}_{self._bs440_config.mac_address}",
+                f"{SIGNAL_SCALE_DISCONNECTED}_{self._bs440_config.mac_address}",
                 self._async_on_disconnected,
             )
         )
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass,
-                f"{SIGNAL_THERMOSTAT_CONNECTED}_{self._bs440_config.mac_address}",
+                f"{SIGNAL_SCALE_CONNECTED}_{self._bs440_config.mac_address}",
                 self._async_on_connected,
             )
         )
@@ -144,12 +134,6 @@ class BS440Climate(BS440Entity, ClimateEntity):
     def _async_on_status_updated(self) -> None:
         """Handle updated status from the thermostat."""
 
-        self._target_temperature = self._thermostat.status.target_temperature.value
-        self._attr_hvac_mode = EQ_TO_HA_HVAC[self._thermostat.status.operation_mode]
-        self._attr_current_temperature = self._get_current_temperature()
-        self._attr_target_temperature = self._get_target_temperature()
-        self._attr_preset_mode = self._get_current_preset_mode()
-        self._attr_hvac_action = self._get_current_hvac_action()
 
     @callback
     def _async_on_device_updated(self) -> None:
@@ -165,139 +149,10 @@ class BS440Climate(BS440Entity, ClimateEntity):
                 serial_number=self._thermostat.device_data.device_serial.value,
             )
 
-    def _get_current_temperature(self) -> float | None:
-        """Return the current temperature."""
+    @property
+    def suggested_unit_of_measurement(self) -> str | None:
+        """Set the suggested unit based on the unit system."""
+        if self.hass.config.units is US_CUSTOMARY_SYSTEM:
+            return UnitOfMass.POUNDS
 
-        match self._bs440_config.current_temp_selector:
-            case CurrentTemperatureSelector.NOTHING:
-                return None
-            case CurrentTemperatureSelector.VALVE:
-                if self._thermostat.status is None:
-                    return None
-
-                return float(self._thermostat.status.valve_temperature)
-            case CurrentTemperatureSelector.UI:
-                return self._target_temperature
-            case CurrentTemperatureSelector.DEVICE:
-                if self._thermostat.status is None:
-                    return None
-
-                return float(self._thermostat.status.target_temperature.value)
-            case CurrentTemperatureSelector.ENTITY:
-                state = self.hass.states.get(self._bs440_config.external_temp_sensor)
-                if state is not None:
-                    try:
-                        return float(state.state)
-                    except ValueError:
-                        pass
-
-        return None
-
-    def _get_target_temperature(self) -> float | None:
-        """Return the target temperature."""
-
-        match self._bs440_config.target_temp_selector:
-            case TargetTemperatureSelector.TARGET:
-                return self._target_temperature
-            case TargetTemperatureSelector.LAST_REPORTED:
-                if self._thermostat.status is None:
-                    return None
-
-                return float(self._thermostat.status.target_temperature.value)
-
-    def _get_current_preset_mode(self) -> str:
-        """Return the current preset mode."""
-
-        if (status := self._thermostat.status) is None:
-            return PRESET_NONE
-        if status.is_window_open:
-            return Preset.WINDOW_OPEN
-        if status.is_boost:
-            return Preset.BOOST
-        if status.is_low_battery:
-            return Preset.LOW_BATTERY
-        if status.is_away:
-            return Preset.AWAY
-        if status.operation_mode is OperationMode.ON:
-            return Preset.OPEN
-        if status.presets is None:
-            return PRESET_NONE
-        if status.target_temperature == status.presets.eco_temperature:
-            return Preset.ECO
-        if status.target_temperature == status.presets.comfort_temperature:
-            return Preset.COMFORT
-
-        return PRESET_NONE
-
-    def _get_current_hvac_action(self) -> HVACAction:
-        """Return the current hvac action."""
-
-        if (
-            self._thermostat.status is None
-            or self._thermostat.status.operation_mode is OperationMode.OFF
-        ):
-            return HVACAction.OFF
-        if self._thermostat.status.valve == 0:
-            return HVACAction.IDLE
-        return HVACAction.HEATING
-
-    async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set new target temperature."""
-
-        if ATTR_HVAC_MODE in kwargs:
-            mode: HVACMode | None
-            if (mode := kwargs.get(ATTR_HVAC_MODE)) is None:
-                return
-
-            if mode is not HVACMode.OFF:
-                await self.async_set_hvac_mode(mode)
-            else:
-                raise ServiceValidationError(
-                    f"[{self._bs440_config.mac_address}] Can't change HVAC mode to off while changing temperature",
-                )
-
-        temperature: float | None
-        if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
-            return
-
-        previous_temperature = self._target_temperature
-        self._target_temperature = temperature
-
-        self.async_write_ha_state()
-
-        try:
-            await self._thermostat.async_set_temperature(self._target_temperature)
-        except BS440Exception:
-            _LOGGER.error(
-                "[%s] Failed setting temperature", self._bs440_config.mac_address
-            )
-            self._target_temperature = previous_temperature
-            self.async_write_ha_state()
-        except ValueError as ex:
-            raise ServiceValidationError("Invalid temperature") from ex
-
-    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        """Set new target hvac mode."""
-
-        if hvac_mode is HVACMode.OFF:
-            await self.async_set_temperature(temperature=EQ3BT_OFF_TEMP)
-
-        try:
-            await self._thermostat.async_set_mode(HA_TO_EQ_HVAC[hvac_mode])
-        except BS440Exception:
-            _LOGGER.error("[%s] Failed setting HVAC mode", self._bs440_config.mac_address)
-
-    async def async_set_preset_mode(self, preset_mode: str) -> None:
-        """Set new preset mode."""
-
-        match preset_mode:
-            case Preset.BOOST:
-                await self._thermostat.async_set_boost(True)
-            case Preset.AWAY:
-                await self._thermostat.async_set_away(True)
-            case Preset.ECO:
-                await self._thermostat.async_set_preset(BS440Preset.ECO)
-            case Preset.COMFORT:
-                await self._thermostat.async_set_preset(BS440Preset.COMFORT)
-            case Preset.OPEN:
-                await self._thermostat.async_set_mode(OperationMode.ON)
+        return UnitOfMass.KILOGRAMS
