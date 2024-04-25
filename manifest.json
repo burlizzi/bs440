@@ -1,27 +1,19 @@
 {
-  "domain": "eq3btsmart",
-  "name": "eQ-3 Bluetooth Smart Thermostats",
+  "domain": "bs440",
+  "name": "BS440 Bluetooth Smart scale",
   "bluetooth": [
     {
-      "local_name": "CC-RT-BLE",
-      "connectable": true
-    },
-    {
-      "local_name": "CC-RT-M-BLE",
-      "connectable": true
-    },
-    {
-      "local_name": "CC-RT-BLE-EQ",
+      "local_name": "BS440",
       "connectable": true
     }
   ],
-  "codeowners": ["@eulemitkeule", "@dbuezas"],
+  "codeowners": ["@burlizzi"],
   "config_flow": true,
   "dependencies": ["bluetooth", "bluetooth_adapters"],
-  "documentation": "https://www.home-assistant.io/integrations/eq3btsmart",
+  "documentation": "https://github.com/burlizzi/bs440",
   "integration_type": "device",
   "iot_class": "local_polling",
-  "loggers": ["eq3btsmart"],
-  "quality_scale": "silver",
-  "requirements": ["eq3btsmart==1.1.6", "bleak-esphome==1.0.0"]
+  "loggers": ["bs440"],
+  "quality_scale": "silver"
+  
 }
